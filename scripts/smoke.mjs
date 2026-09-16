@@ -66,7 +66,7 @@ const state = await page.evaluate(async (at) => {
     buildingsRendered: map.queryRenderedFeatures({
       layers: map.getStyle().layers.filter((l) => l.type === 'fill-extrusion' && l.id.startsWith('buildings-') && map.getPaintProperty(l.id, 'fill-extrusion-opacity') === 1).map((l) => l.id),
     }).length,
-    deckLayers: window.overlay?._deck?.props?.layers?.filter(Boolean).map((l) => l.id) ?? [],
+    dataLayers: ['barrios', 'colectivos', 'ciclovias'].filter((id) => map.getLayer(id) && map.getLayoutProperty(id, 'visibility') !== 'none'),
   };
 }, at);
 // Clic en un edificio cercano al centro para verificar la ficha de información.

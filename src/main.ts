@@ -1,6 +1,9 @@
-import maplibregl, { type MapGeoJSONFeature } from 'maplibre-gl';
-import { MapboxOverlay } from '@deck.gl/mapbox';
-import { GeoJsonLayer } from '@deck.gl/layers';
+import * as maplibregl from 'maplibre-gl';
+import type { MapGeoJSONFeature } from 'maplibre-gl';
+import type * as GeoJSON from 'geojson';
+// MapLibre 6 busca su worker junto a su propio módulo, ruta que Vite cambia al empaquetar:
+// se lo pasamos ya empaquetado.
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/space-grotesk';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -18,7 +21,6 @@ import {
 } from './analysis';
 import { BASEMAP_STYLE, CABA_BOUNDS, DATA_URL, INITIAL_VIEW, type AnalysisCategory } from './config';
 import {
-  BUILDINGS_ANCHOR,
   activeBuildingLayers,
   addBuildings,
   buildingSources,
@@ -30,8 +32,10 @@ import {
   DATA_LAYERS,
   PICK_FALLBACK_LAYERS,
   PICK_PRIORITY_LAYERS,
-  buildDataLayers,
+  dataFeatureAt,
   describeDataFeature,
+  setBarrioFocus,
+  setDataLayers,
   type DataLayerId,
 } from './layers/transport';
 import { renderDock } from './ui/dock';
@@ -53,8 +57,9 @@ const CITY_VIEW = { center: [-58.445, -34.615] as [number, number], zoom: 12.1, 
 const params = new URLSearchParams(location.search);
 const withIntro = !params.has('nointro') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// MapLibre 5 procesa los tiles con un solo worker por defecto. Con 2 la carga inicial baja
+// MapLibre procesa los tiles con un solo worker por defecto (salvo en Safari). Con 2 la carga inicial baja
 // ~20 % (npm run bench); más de 4 no mejora. ?workers=N permite probar otros valores.
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 maplibregl.setWorkerCount(
   Number(params.get('workers')) || Math.min(4, Math.max(2, Math.floor((navigator.hardwareConcurrency || 4) / 4))),
 );
@@ -83,10 +88,8 @@ const map = new maplibregl.Map({
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 
-const overlay = new MapboxOverlay({ interleaved: true, layers: [] });
-map.addControl(overlay);
 // Acceso para pruebas automáticas (smoke/bench): siempre en desarrollo, con ?debug en producción.
-if (import.meta.env.DEV || params.has('debug')) Object.assign(window, { map, overlay });
+if (import.meta.env.DEV || params.has('debug')) Object.assign(window, { map });
 
 const $ = (id: string) => document.getElementById(id)!;
 const panelEl = $('panel');
@@ -111,32 +114,20 @@ fetch(DATA_URL('barrios'))
   .catch((err) => console.warn('No se pudieron cargar los barrios', err));
 
 // --- Capas ---
+let mapReady = false;
 const dataLayerIds = new Set<string>(DATA_LAYERS.map((l) => l.id));
 function refreshDataLayers() {
+  if (!mapReady) return;
+  setDataLayers(map, new Set([...state.active].filter((id) => dataLayerIds.has(id)) as DataLayerId[]));
+  // El filtro usa el nombre tal como figura en el GeoJSON de barrios.
   const selected = state.barrio ? barrioFeatures.get(normalizeName(state.barrio)) : undefined;
-  overlay.setProps({
-    layers: [
-      ...buildDataLayers(new Set([...state.active].filter((id) => dataLayerIds.has(id)) as DataLayerId[])),
-      selected
-        ? new GeoJsonLayer({
-          id: 'barrio-foco',
-          data: [selected],
-          filled: false,
-          getLineColor: [255, 255, 255, 230],
-          lineWidthUnits: 'pixels',
-          getLineWidth: 3,
-          beforeId: BUILDINGS_ANCHOR,
-        })
-        : null,
-    ],
-  });
+  setBarrioFocus(map, selected ? String(selected.properties?.barrio) : null);
 }
 const current = () => getAnalysis(state.analysis);
 const colorMode = () => current().colorMode ?? 'altura';
 const refreshEnvelope = () =>
   setEnvelopeView(map, !!current().envelope && state.active.has('envolvente') && state.active.has('edificios'), state.focus);
 
-let mapReady = false;
 function refreshAnalysisView() {
   const analysis = current();
   if (mapReady) {
@@ -290,26 +281,31 @@ const renderedAt = (point: maplibregl.PointLike, layers: string[]): MapGeoJSONFe
 const buildingAt = (point: maplibregl.PointLike) => renderedAt(point, activeBuildingLayers(map));
 
 // Orden de selección: líneas (ciclovías, colectivos) > edificios > envolvente > barrios.
-// El pick de deck.gl lee píxeles de la GPU: sólo se hace si hay capas de líneas activas.
-const pickDeck = (point: maplibregl.Point, layerIds: string[]) => {
-  const active = layerIds.filter((id) => state.active.has(id as DataLayerId));
-  return active.length ? overlay.pickObject({ x: point.x, y: point.y, radius: 4, layerIds: active }) : null;
-};
+const lineAt = (point: { x: number; y: number }) => dataFeatureAt(map, point, PICK_PRIORITY_LAYERS);
 
 // Hover: como máximo una consulta por cuadro, y ninguna mientras la cámara se mueve.
 let hoverPoint: maplibregl.Point | null = null;
 let hoverFrame = 0;
+let hoveredLine: { source: string; id: string | number } | undefined;
+const setLineHover = (line: MapGeoJSONFeature | undefined) => {
+  const next = line?.id !== undefined ? { source: line.source, id: line.id } : undefined;
+  if (next?.source === hoveredLine?.source && next?.id === hoveredLine?.id) return;
+  if (hoveredLine) map.setFeatureState(hoveredLine, { hover: false });
+  hoveredLine = next;
+  if (hoveredLine) map.setFeatureState(hoveredLine, { hover: true });
+};
 function updateHover() {
   hoverFrame = 0;
   if (!hoverPoint || map.isMoving()) return;
-  const deckHit = pickDeck(hoverPoint, PICK_PRIORITY_LAYERS);
-  const building = deckHit ? undefined : buildingAt(hoverPoint);
+  const line = lineAt(hoverPoint);
+  const building = line ? undefined : buildingAt(hoverPoint);
+  setLineHover(line);
   if (building?.id !== hoveredId) {
     setFeatureState(hoveredId, { hover: false });
     hoveredId = building?.id;
     setFeatureState(hoveredId, { hover: true });
   }
-  map.getCanvas().style.cursor = deckHit || building ? 'pointer' : '';
+  map.getCanvas().style.cursor = line || building ? 'pointer' : '';
 }
 map.on('mousemove', (e) => {
   hoverPoint = e.point;
@@ -317,6 +313,7 @@ map.on('mousemove', (e) => {
 });
 map.getCanvas().addEventListener('mouseleave', () => {
   hoverPoint = null;
+  setLineHover(undefined);
   setFeatureState(hoveredId, { hover: false });
   hoveredId = undefined;
 });
@@ -325,10 +322,8 @@ map.on('click', (e) => {
   setFeatureState(selectedId, { selected: false });
   selectedId = undefined;
 
-  const deckHit = pickDeck(e.point, PICK_PRIORITY_LAYERS);
-  if (deckHit?.object && deckHit.layer) {
-    return renderInfo(infoEl, describeDataFeature(deckHit.layer.id, deckHit.object.properties ?? {}));
-  }
+  const line = lineAt(e.point);
+  if (line) return renderInfo(infoEl, describeDataFeature(line.layer.id, line.properties));
 
   const building = buildingAt(e.point);
   if (building) {
@@ -359,6 +354,6 @@ map.on('click', (e) => {
     });
   }
 
-  const area = pickDeck(e.point, PICK_FALLBACK_LAYERS);
-  renderInfo(infoEl, area?.object && area.layer ? describeDataFeature(area.layer.id, area.object.properties ?? {}) : null);
+  const area = dataFeatureAt(map, e.point, PICK_FALLBACK_LAYERS);
+  renderInfo(infoEl, area ? describeDataFeature(area.layer.id, area.properties) : null);
 });

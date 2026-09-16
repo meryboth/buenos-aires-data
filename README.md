@@ -227,7 +227,7 @@ flowchart LR
   end
   subgraph APP["App web (Vite + TypeScript)"]
     ML[MapLibre GL<br/>edificios y envolvente 3D]
-    DK[deck.gl<br/>colectivos, ciclovías, barrios]
+    DK[MapLibre GL<br/>colectivos, ciclovías, barrios]
     UI[Panel, leyenda, ficha]
   end
   T --> B1
@@ -251,16 +251,17 @@ flowchart LR
 | Pieza | Rol |
 |---|---|
 | [Vite](https://vite.dev) + TypeScript | Build y servidor de desarrollo; interfaz sin framework |
-| [MapLibre GL JS 5](https://maplibre.org) | Mapa base, edificios y envolvente 3D (`fill-extrusion` sobre vector tiles) |
-| [deck.gl 9](https://deck.gl) (`MapboxOverlay` intercalado) | Capas de datos: colectivos, ciclovías, barrios |
+| [MapLibre GL JS 6](https://maplibre.org) | Todo el mapa: base, edificios y envolvente 3D (`fill-extrusion` sobre vector tiles) y capas de datos (colectivos, ciclovías, barrios) |
 | [CARTO Dark Matter](https://github.com/CartoDB/basemap-styles) | Mapa base gratuito, sin API key |
 | Node (`geojson-vt` + `vt-pbf`) | Conversión de los GeoJSON gigantes en vector tiles estáticos |
 | Space Grotesk + Inter | Tipografías incluidas en el proyecto (sin servicios externos) |
 | `puppeteer-core` | Smoke test, benchmark y capturas con el Edge/Chrome instalado |
 
-> MapLibre se mantiene en la **v5** porque deck.gl 9.4 todavía no es compatible con MapLibre 6 (usa `map.transform`,
-> que v6 hizo privado). `npm audit` informa un XSS en `DOM.sanitize` de v5; el proyecto no inserta HTML de terceros a
-> través de MapLibre. Migrar cuando deck.gl lo soporte.
+> Antes el proyecto usaba deck.gl para las capas de datos, lo que obligaba a quedarse en MapLibre 5, con
+> una vulnerabilidad crítica (XSS en `DOM.sanitize`). Al reemplazarlo por capas nativas se actualizó a MapLibre 6:
+> `npm audit` sin vulnerabilidades, 36 FPS en vez de 28 al girar la cámara y un JS principal de 283 KB (gzip) en vez de
+> 498 KB. MapLibre 6 ubica su worker junto a su propio módulo; como Vite cambia esa ruta al empaquetar, `src/main.ts`
+> se lo pasa con `setWorkerUrl`.
 
 ---
 
@@ -374,9 +375,11 @@ Radeon integrada, vista inicial en 1400×850):
 
 | Métrica | Antes | Después |
 |---|---|---|
-| Carga hasta ver todo | 15,8 s | **5,9 s** |
+| Carga hasta ver todo | 15,8 s | **5,7 s** |
+| FPS girando la cámara | 28 | **36** |
+| Cuadros lentos (percentil 95) | 245 ms | **86 ms** |
 | Tiles descargados | 20,2 MB | 17,5 MB |
-| Memoria JS | 28 MB | 23 MB |
+| JavaScript principal (gzip) | 498 KB | **283 KB** |
 | Peso total de los tiles | 162 MB | 130 MB |
 
 **Qué se hizo y por qué:**
@@ -385,21 +388,22 @@ Radeon integrada, vista inicial en 1400×850):
   los datos reprocesa *toda* la fuente con todas sus capas. Cada vista (capacidad, altura y filtro) usa su propia
   fuente sobre los mismos tiles y se crea recién al usarla; después se alterna por opacidad, que es instantáneo.
   Precargar la vista de altura costaba ~7 s, y separar cada categoría en su propia capa duplicaba el trabajo.
-- **Más workers.** MapLibre 5 procesa los tiles con un solo worker salvo en Safari; con 2 a 4 la carga baja ~20 %.
+- **Más workers.** MapLibre procesa los tiles con un solo worker salvo en Safari; con 2 a 4 la carga baja ~20 %.
   Más de 4 no mejora.
 - **Envolvente liviana.** Una sola capa, sólo desde zoom 14 y sin descargar parcelas fuera del análisis de capacidad
   (costaba ~4 s de carga y 10 FPS).
 - **Tiles más chicos.** El id va en el campo nativo del tile y no además como propiedad (−18 %).
-- **Hover.** Como máximo una consulta por cuadro, ninguna con la cámara en movimiento, y sin leer píxeles de deck.gl
-  si no hay capas de líneas activas.
+- **Hover.** Como máximo una consulta por cuadro y ninguna con la cámara en movimiento.
+- **Sin deck.gl.** Las capas de datos son nativas de MapLibre: menos JavaScript, un solo motor de dibujo y las capas de
+  colectivos y ciclovías se descargan recién al activarlas.
 - **Antialiasing sólo en pantallas comunes.** En GPUs integradas cuesta ~25 % de FPS y en pantallas de alta densidad
   casi no se nota.
 - **Opacidad exactamente 1** en las capas activas: MapLibre dibuja las extrusiones en una sola pasada.
 - **Pantalla de carga** que se va con los primeros edificios; el resto se completa con un aviso.
 
 **Compensaciones:** el primer cambio a "Altura" y el primer filtro tardan ~1–2 s (procesan su fuente, con aviso en
-pantalla); los siguientes son instantáneos. Al girar la cámara, la GPU integrada queda en ~28 FPS (~36 sin
-antialiasing). Al publicar, conviene servir los tiles comprimidos: con gzip pesan la mitad.
+pantalla); los siguientes son instantáneos. Al publicar, conviene servir los tiles comprimidos: con gzip pesan la
+mitad.
 
 ---
 
@@ -454,7 +458,7 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 │  ├─ layers/
 │  │  ├─ buildings.ts      vistas de edificios (una fuente por vista)
 │  │  ├─ envelope.ts       envolvente permitida sin construir
-│  │  └─ transport.ts      capas deck.gl
+│  │  └─ transport.ts      capas de datos (colectivos, ciclovías, barrios)
 │  ├─ ui/                  panel, leyenda, ficha, herramientas, avisos y gráficos
 │  └─ style.css
 └─ docs/                   capturas de la documentación y vista previa del repo
@@ -518,7 +522,6 @@ rankings (`rankingsHtml`).
 - [ ] Mostrar todas las construcciones a escala barrio.
 - [ ] Vehículos en tiempo real con la API de Transporte de la Ciudad (requiere credenciales).
 - [ ] Sumar capas producidas en QGIS (GeoJSON o GeoPackage) al pipeline.
-- [ ] Migrar a MapLibre 6 cuando deck.gl lo soporte.
 
 ---
 
@@ -529,7 +532,7 @@ rankings (`rankingsHtml`).
   (ver la ficha de cada dataset).
 - **Mapa base:** © [CARTO](https://carto.com/attributions) · © colaboradores de
   [OpenStreetMap](https://www.openstreetmap.org/copyright).
-- **Librerías:** MapLibre GL JS (BSD-3), deck.gl (MIT), Vite (MIT), geojson-vt (ISC), vt-pbf (MIT), puppeteer-core
+- **Librerías:** MapLibre GL JS (BSD-3), Vite (MIT), geojson-vt (ISC), vt-pbf (MIT), puppeteer-core
   (Apache-2.0), Inter y Space
   Grotesk (SIL OFL).
 - **Código de este repositorio:** [licencia MIT](LICENSE). Las contribuciones se publican bajo la misma licencia.
