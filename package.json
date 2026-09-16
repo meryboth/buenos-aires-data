@@ -12,7 +12,8 @@
     "data": "npm run data:fetch && npm run data:buildings && npm run data:parcels",
     "smoke": "node scripts/smoke.mjs",
     "data:parcels": "node --max-old-space-size=6144 scripts/build-parcel-tiles.mjs",
-    "bench": "node scripts/bench.mjs"
+    "bench": "node scripts/bench.mjs",
+    "docs:screenshots": "node scripts/screenshots.mjs"
   },
   "author": "",
   "license": "ISC",
@@ -33,5 +34,8 @@
     "vite": "^8.3.0",
     "vt-pbf": "^3.1.3"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=20.11"
+  }
 }
