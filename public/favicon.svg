@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Isotipo de Buenos Aires Data Driven: una parcela que puede crecer (punteado),
+       un edificio alto y uno más alto que el código. Fondo oscuro para verse en pestañas claras y oscuras. -->
+  <rect width="64" height="64" rx="14" fill="#0b0b0c"/>
+  <rect x="10" y="17" width="12" height="36" rx="2.5" fill="none" stroke="#9ec5f4" stroke-width="2" stroke-dasharray="3.5 3"/>
+  <rect x="9" y="36" width="14" height="18" rx="3" fill="#9ec5f4"/>
+  <rect x="26" y="10" width="12" height="43" rx="2.5" fill="#3987e5"/>
+  <rect x="42" y="24" width="12" height="29" rx="2.5" fill="#e66767"/>
+</svg>

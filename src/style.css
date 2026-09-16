@@ -333,3 +333,10 @@ body:has(.panel--collapsed) .map-status { left: 50%; }
 @media (max-width: 720px) {
   .map-status, body:has(.panel--collapsed) .map-status { top: 64px; left: 50%; }
 }
+
+/* Sin JavaScript o sin WebGL: el mensaje reemplaza a la pantalla de carga. */
+.noscript, .loader__error {
+  position: fixed; inset: 0; z-index: 30; margin: 0; display: grid; place-content: center; padding: 24px;
+  background: var(--bg); color: var(--text); text-align: center; font-size: 15px;
+}
+.loader__error { position: static; background: none; padding: 0; max-width: 420px; color: var(--muted); }

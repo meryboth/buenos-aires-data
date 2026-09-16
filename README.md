@@ -282,6 +282,19 @@ Las descargas crudas se guardan **fuera del proyecto**, en `~/.cache/digital-bue
 variable `DBA_CACHE_DIR`), para no sincronizar gigas a carpetas como OneDrive. Una segunda corrida reutiliza lo
 descargado.
 
+### Publicar
+
+`npm run build` genera la app en `dist/` (incluye los tiles, que conviene servir comprimidos). Antes de publicar,
+definí la URL definitiva en `.env`:
+
+```bash
+VITE_SITE_URL=https://tu-dominio.org
+```
+
+Con eso se agregan el enlace canónico y `og:url`, y la miniatura para redes se sirve desde el propio sitio. Sin esa
+variable, la miniatura se toma del repositorio. La app también es instalable (manifiesto web con íconos para
+escritorio, Android e iOS).
+
 ### Parámetros de URL
 
 | Parámetro | Efecto |
@@ -307,6 +320,7 @@ descargado.
 | `npm run smoke` | Prueba de humo con navegador headless ([ver abajo](#pruebas-y-benchmark)) |
 | `npm run bench` | Benchmark de rendimiento con GPU real |
 | `npm run docs:screenshots` | Regenera las capturas y el GIF de este README |
+| `npm run brand` | Regenera íconos, miniatura para redes (`public/og-image.jpg`) y vista previa del repo (`docs/social-preview.jpg`) |
 
 ---
 
@@ -417,8 +431,9 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 ## Estructura del código
 
 ```
-├─ index.html              pantalla de carga y contenedores de la interfaz
-├─ vite.config.ts          sirve los tiles desde disco (204 si no existen) y define puertos
+├─ index.html              metadatos (SEO, Open Graph, datos estructurados), pantalla de carga e interfaz
+├─ public/                 favicon, íconos, manifiesto web y miniatura para redes
+├─ vite.config.ts          sirve los tiles desde disco, metadatos según VITE_SITE_URL y puertos
 ├─ scripts/
 │  ├─ fetch-data.mjs       datasets livianos → public/data
 │  ├─ build-building-tiles.mjs
@@ -426,6 +441,7 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 │  ├─ smoke.mjs            prueba de humo
 │  ├─ bench.mjs            benchmark
 │  ├─ screenshots.mjs      capturas de este README
+│  ├─ brand-assets.mjs     íconos, miniatura para redes y vista previa del repo
 │  └─ lib/
 │     ├─ common.mjs        descargas, caché y utilidades
 │     ├─ tiles.mjs         generador genérico de vector tiles en streaming
@@ -441,7 +457,7 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 │  │  └─ transport.ts      capas deck.gl
 │  ├─ ui/                  panel, leyenda, ficha, herramientas, avisos y gráficos
 │  └─ style.css
-└─ docs/screenshots/       imágenes de la documentación
+└─ docs/                   capturas de la documentación y vista previa del repo
 ```
 
 ---

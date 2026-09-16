@@ -2,11 +2,70 @@
 <html lang="es-AR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Buenos Aires Data Driven: la ciudad en 3D leída con datos abiertos. ¿Cuánto se puede construir todavía?" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Buenos Aires Data Driven · La ciudad en 3D, leída con datos abiertos</title>
+    <meta
+      name="description"
+      content="Explorá la Ciudad de Buenos Aires en 3D: 1,4 millones de edificios cruzados con el Código Urbanístico. ¿Cuánto se puede construir todavía? ¿Cómo crece la ciudad en altura? Proyecto open source con datos de BA Data."
+    />
+    <meta name="keywords" content="Buenos Aires, CABA, urbanismo, Código Urbanístico, datos abiertos, BA Data, GIS, mapa 3D, capacidad constructiva, altura de edificios" />
+    <meta name="author" content="Buenos Aires Data Driven" />
+    <meta name="robots" content="index, follow" />
+    <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b0b0c" />
-    <title>Buenos Aires Data Driven</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3.5' y='19' width='7' height='9.5' rx='1.5' fill='%239ec5f4'/><rect x='12.5' y='3' width='7' height='25.5' rx='1.5' fill='%233987e5'/><rect x='21.5' y='11' width='7' height='17.5' rx='1.5' fill='%23e66767'/></svg>" />
+
+    <!-- Íconos y app instalable -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="application-name" content="BA Data Driven" />
+    <meta name="apple-mobile-web-app-title" content="BA Data Driven" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Vista previa al compartir (Open Graph y X/Twitter) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Buenos Aires Data Driven" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:title" content="Buenos Aires Data Driven" />
+    <meta property="og:description" content="La Ciudad de Buenos Aires en 3D, leída con datos abiertos. El 80 % de las parcelas todavía puede crecer en altura: explorá dónde y cuánto." />
+    <meta property="og:image" content="__OG_IMAGE__" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Edificios de Buenos Aires en 3D coloreados según cuánto pueden crecer, con el título Buenos Aires Data Driven." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Buenos Aires Data Driven" />
+    <meta name="twitter:description" content="La Ciudad de Buenos Aires en 3D, leída con datos abiertos." />
+    <meta name="twitter:image" content="__OG_IMAGE__" />
+    <meta name="twitter:image:alt" content="Edificios de Buenos Aires en 3D coloreados según cuánto pueden crecer." />
+
+    <!-- Conexiones anticipadas al mapa base -->
+    <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin />
+    <link rel="preconnect" href="https://tiles.basemaps.cartocdn.com" crossorigin />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Buenos Aires Data Driven",
+        "description": "La Ciudad de Buenos Aires en 3D, leída con datos abiertos: capacidad constructiva, altura de la ciudad y más análisis urbanos.",
+        "image": "__OG_IMAGE__",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "es-AR",
+        "isAccessibleForFree": true,
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/meryboth/buenos-aires-data",
+        "spatialCoverage": { "@type": "Place", "name": "Ciudad Autónoma de Buenos Aires, Argentina" },
+        "isBasedOn": [
+          "https://data.buenosaires.gob.ar/dataset/tejido-urbano",
+          "https://data.buenosaires.gob.ar/dataset/codigo-urbanistico",
+          "https://data.buenosaires.gob.ar/dataset/parcelas"
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="map"></div>
@@ -19,6 +78,10 @@
       <div class="loader__bar"><i></i></div>
       <p>Cargando 1,4 millones de edificios…</p>
     </div>
+
+    <noscript>
+      <p class="noscript">Buenos Aires Data Driven necesita JavaScript y WebGL para mostrar la ciudad en 3D.</p>
+    </noscript>
 
     <aside id="panel" class="panel" aria-label="Análisis y capas"></aside>
     <aside id="info" class="info" hidden aria-live="polite"></aside>

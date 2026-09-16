@@ -24,11 +24,11 @@ export const icons = {
   expand: svg('<path d="M9 6l6 6-6 6"/>'),
 };
 
-/** Isotipo: tres volúmenes con los colores de la lectura principal. */
+/** Isotipo (mismo dibujo que public/favicon.svg, sin el fondo). */
 export const brandMark = `
-  <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
-    <rect x="3.5" y="6.5" width="7" height="22" rx="1.5" fill="none" stroke="#9ec5f4" stroke-dasharray="2 2"/>
-    <rect x="3.5" y="19" width="7" height="9.5" rx="1.5" fill="#9ec5f4"/>
-    <rect x="12.5" y="3" width="7" height="25.5" rx="1.5" fill="#3987e5"/>
-    <rect x="21.5" y="11" width="7" height="17.5" rx="1.5" fill="#e66767"/>
+  <svg class="brand__mark" viewBox="6 6 52 52" aria-hidden="true">
+    <rect x="10" y="17" width="12" height="36" rx="2.5" fill="none" stroke="#9ec5f4" stroke-width="2" stroke-dasharray="3.5 3"/>
+    <rect x="9" y="36" width="14" height="18" rx="3" fill="#9ec5f4"/>
+    <rect x="26" y="10" width="12" height="43" rx="2.5" fill="#3987e5"/>
+    <rect x="42" y="24" width="12" height="29" rx="2.5" fill="#e66767"/>
   </svg>`;

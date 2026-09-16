@@ -7,3 +7,7 @@ public/tiles/
 
 # Configuración local de herramientas
 .claude/
+
+# Variables locales con secretos (no versionar)
+.env.local
+.env.*.local

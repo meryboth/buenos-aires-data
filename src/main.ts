@@ -62,6 +62,15 @@ maplibregl.setWorkerCount(
 // casi no se nota, así que sólo se activa en las comunes. ?aa=0|1 lo fuerza.
 const antialias = params.has('aa') ? params.get('aa') !== '0' : devicePixelRatio < 1.5;
 
+// Sin WebGL no hay mapa 3D: se avisa en la pantalla de carga en vez de quedar cargando.
+if (!document.createElement('canvas').getContext('webgl2')) {
+  const loader = document.getElementById('loader')!;
+  loader.querySelector('.loader__bar')?.remove();
+  loader.querySelector('p')!.outerHTML =
+    '<p class="loader__error">Tu navegador no soporta WebGL 2, necesario para mostrar la ciudad en 3D. Probá con una versión actual de Chrome, Edge, Firefox o Safari.</p>';
+  throw new Error('WebGL 2 no disponible');
+}
+
 const map = new maplibregl.Map({
   container: 'map',
   style: BASEMAP_STYLE,

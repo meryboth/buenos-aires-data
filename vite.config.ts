@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { defineConfig, type Plugin, type ViteDevServer, type PreviewServer } from 'vite';
+import { defineConfig, loadEnv, type Plugin, type ViteDevServer, type PreviewServer } from 'vite';
 
 // Sirve los vector tiles directamente desde disco:
 // - Tiles fuera de la ciudad no existen: 204 (tile vacío) en vez del fallback SPA a index.html,
@@ -34,9 +34,33 @@ function serveTiles(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [serveTiles()],
+// Mientras la app no esté publicada, la miniatura para redes se sirve desde el repositorio
+// (las redes necesitan una URL absoluta).
+const REPO_OG_IMAGE = 'https://raw.githubusercontent.com/meryboth/buenos-aires-data/main/public/og-image.jpg';
+
+/** Metadatos que dependen de dónde se publica la app (VITE_SITE_URL en .env). */
+function siteMetadata(siteUrl: string): Plugin {
+  const url = siteUrl.replace(/\/+$/, '');
+  return {
+    name: 'site-metadata',
+    transformIndexHtml(html) {
+      const withImage = html.replaceAll('__OG_IMAGE__', url ? `${url}/og-image.jpg` : REPO_OG_IMAGE);
+      if (!url) return withImage;
+      return {
+        html: withImage.replace('"@type": "WebApplication",', `"@type": "WebApplication",
+        "url": "${url}/",`),
+        tags: [
+          { tag: 'link', attrs: { rel: 'canonical', href: `${url}/` }, injectTo: 'head' },
+          { tag: 'meta', attrs: { property: 'og:url', content: `${url}/` }, injectTo: 'head' },
+        ],
+      };
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => ({
+  plugins: [serveTiles(), siteMetadata(loadEnv(mode, process.cwd(), 'VITE_').VITE_SITE_URL ?? '')],
   server: { port: 5180 },
   preview: { port: 4180 },
   build: { chunkSizeWarningLimit: 2500 },
-});
+}));
