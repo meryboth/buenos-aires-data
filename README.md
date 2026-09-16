@@ -1,5 +1,10 @@
 # Buenos Aires Data Driven
 
+[![Verificación](https://github.com/meryboth/buenos-aires-data/actions/workflows/ci.yml/badge.svg)](https://github.com/meryboth/buenos-aires-data/actions/workflows/ci.yml)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-3dd6a0)](LICENSE)
+[![Se buscan colaboradores](https://img.shields.io/badge/se%20buscan-colaboradores-3987e5)](CONTRIBUTING.md)
+[![Datos: BA Data](https://img.shields.io/badge/datos-BA%20Data%20·%20CC%20BY%202.5%20AR-8f8d87)](https://data.buenosaires.gob.ar)
+
 **La Ciudad de Buenos Aires en 3D, leída con datos abiertos.** Los 1,4 millones de volúmenes edificados de la ciudad,
 con su altura real, cruzados con el Código Urbanístico y otras fuentes de [BA Data](https://data.buenosaires.gob.ar)
 para responder preguntas urbanas concretas: ¿cuánto se puede construir todavía?, ¿cómo crece la ciudad en altura?
@@ -8,11 +13,15 @@ para responder preguntas urbanas concretas: ¿cuánto se puede construir todaví
 
 <p align="center"><img src="docs/screenshots/intro.gif" alt="Animación de entrada: la cámara vuela desde la vista de la ciudad hasta el Microcentro" width="560"></p>
 
+> **Proyecto open source que busca colaboradores.** Si te interesa la ciudad desde el urbanismo, los datos, el diseño o
+> el desarrollo, hay lugar para vos: mirá [Colaborá](#colaborá).
+
 ---
 
 ## Contenido
 
 - [Qué es](#qué-es)
+- [Colaborá](#colaborá)
 - [Recorrido por la app](#recorrido-por-la-app)
 - [Análisis](#análisis)
   - [Capacidad constructiva](#capacidad-constructiva)
@@ -42,6 +51,29 @@ ficha de cada parcela.
 - **318.046** parcelas cruzadas con la normativa vigente del **Código Urbanístico** (diciembre de 2024).
 - **48** barrios con estadísticas y rankings.
 - Funciona en escritorio y celular, sin claves de API ni servicios pagos.
+
+## Colaborá
+
+Buenos Aires Data Driven es **software libre** (licencia MIT) y crece con aportes de perfiles distintos:
+
+| Si sabés de… | Podés aportar |
+|---|---|
+| Urbanismo y planificación | Nuevas preguntas y análisis, revisión de metodologías y de la lectura de la normativa |
+| GIS y datos | Datasets nuevos, mejoras en los cruces, validación de resultados, capas hechas en QGIS |
+| Desarrollo web / 3D | Análisis, interfaz, rendimiento, accesibilidad, publicación |
+| Diseño | Visualización, leyendas, experiencia en celular |
+| Comunicación | Documentación, tutoriales, difusión de resultados |
+
+**Por dónde empezar:**
+
+1. Leé la [guía para colaborar](CONTRIBUTING.md) y el [código de conducta](CODE_OF_CONDUCT.md).
+2. Buscá issues con las etiquetas [`good first issue`](https://github.com/meryboth/buenos-aires-data/labels/good%20first%20issue)
+   o [`help wanted`](https://github.com/meryboth/buenos-aires-data/labels/help%20wanted).
+3. ¿Tenés una idea? Abrí una [propuesta de análisis](https://github.com/meryboth/buenos-aires-data/issues/new?template=propuesta-de-analisis.yml):
+   no hace falta programar para proponer una pregunta sobre la ciudad.
+
+**Se busca ayuda especialmente en:** los análisis *Sol y sombra* y *Densidad y transporte*, la publicación de la app
+(tiles en PMTiles y hosting estático), la vista a escala barrio y la validación de resultados en territorio.
 
 ## Recorrido por la app
 
@@ -462,6 +494,8 @@ rankings (`rankingsHtml`).
 
 ## Hoja de ruta
 
+¿Querés tomar alguno de estos puntos? Comentalo en un issue o abrí uno nuevo (ver [Colaborá](#colaborá)).
+
 - [ ] Análisis **Sol y sombra**.
 - [ ] Análisis **Densidad y transporte**.
 - [ ] Publicar la app: tiles empaquetados en **PMTiles** y comprimidos, en un hosting estático.
@@ -482,4 +516,4 @@ rankings (`rankingsHtml`).
 - **Librerías:** MapLibre GL JS (BSD-3), deck.gl (MIT), Vite (MIT), geojson-vt (ISC), vt-pbf (MIT), puppeteer-core
   (Apache-2.0), Inter y Space
   Grotesk (SIL OFL).
-- **Código de este repositorio:** todavía sin licencia definida.
+- **Código de este repositorio:** [licencia MIT](LICENSE). Las contribuciones se publican bajo la misma licencia.

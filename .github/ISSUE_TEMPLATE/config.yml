@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Guía para colaborar
+    url: https://github.com/meryboth/buenos-aires-data/blob/main/CONTRIBUTING.md
+    about: Cómo preparar el entorno, convenciones y por dónde empezar.
+  - name: Datos abiertos de la Ciudad (BA Data)
+    url: https://data.buenosaires.gob.ar
+    about: Para errores en los datos de origen, el canal es el portal oficial.

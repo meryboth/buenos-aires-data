@@ -1,0 +1,51 @@
+name: Reporte de error
+description: Algo no funciona como debería (en la app, el pipeline o los datos).
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Gracias por reportarlo. Cuanto más concreto, más fácil de resolver.
+  - type: textarea
+    id: que-paso
+    attributes:
+      label: Qué pasó
+      description: Describí el error y qué esperabas que pasara.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Abrir la app con #altura
+        2. Elegir el barrio Palermo
+        3. …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Dónde ocurre
+      options:
+        - App (mapa o interfaz)
+        - Datos o resultados (una parcela mal clasificada, un número raro)
+        - Pipeline de datos (npm run data)
+        - Pruebas o benchmark
+        - Documentación
+    validations:
+      required: true
+  - type: input
+    id: smp
+    attributes:
+      label: Parcela (si aplica)
+      description: SMP que figura en la ficha, por ejemplo 040-022-007F.
+  - type: input
+    id: entorno
+    attributes:
+      label: Navegador y sistema
+      placeholder: Chrome 140 en Windows 11, Safari en iPhone…
+  - type: textarea
+    id: capturas
+    attributes:
+      label: Capturas o mensajes de error
+      description: Podés pegar imágenes o el texto de la consola.

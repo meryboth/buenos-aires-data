@@ -1,0 +1,33 @@
+name: Mejora
+description: Una mejora en la interfaz, el rendimiento, la documentación o el código.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qué se podría mejorar
+      description: Describí la situación actual y por qué conviene cambiarla.
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+      description: Cómo lo resolverías. Si hay alternativas, contalas.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Interfaz y diseño
+        - Rendimiento
+        - Datos y pipeline
+        - Documentación
+        - Publicación y despliegue
+        - Otra
+  - type: checkboxes
+    id: ayuda
+    attributes:
+      label: Participación
+      options:
+        - label: Me gustaría trabajar en esta mejora.

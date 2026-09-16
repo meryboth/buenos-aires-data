@@ -16,7 +16,7 @@
     "docs:screenshots": "node scripts/screenshots.mjs"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@deck.gl/core": "^9.4.0",
@@ -34,8 +34,26 @@
     "vite": "^8.3.0",
     "vt-pbf": "^3.1.3"
   },
-  "private": true,
   "engines": {
     "node": ">=20.11"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/meryboth/buenos-aires-data.git"
+  },
+  "homepage": "https://github.com/meryboth/buenos-aires-data#readme",
+  "bugs": {
+    "url": "https://github.com/meryboth/buenos-aires-data/issues"
+  },
+  "keywords": [
+    "buenos-aires",
+    "urbanismo",
+    "gis",
+    "datos-abiertos",
+    "maplibre",
+    "deck.gl",
+    "3d",
+    "open-data"
+  ],
+  "private": true
 }

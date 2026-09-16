@@ -1,0 +1,44 @@
+name: Propuesta de análisis
+description: Una nueva pregunta urbana para responder con datos.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cada análisis responde una pregunta concreta sobre la ciudad. Contanos cuál te interesa;
+        no hace falta saber programar para proponerlo.
+  - type: input
+    id: pregunta
+    attributes:
+      label: Pregunta
+      placeholder: ¿Qué calles pierden sol si se construye todo lo permitido?
+    validations:
+      required: true
+  - type: textarea
+    id: por-que
+    attributes:
+      label: Por qué importa
+      description: ¿Qué decisión, debate o curiosidad ayuda a responder? ¿Quién lo usaría?
+    validations:
+      required: true
+  - type: textarea
+    id: datos
+    attributes:
+      label: Datos necesarios
+      description: Datasets (enlaces a BA Data u otras fuentes abiertas) y cómo se cruzarían.
+  - type: textarea
+    id: metodologia
+    attributes:
+      label: Metodología propuesta
+      description: Cómo se calcularía, qué supuestos tiene y qué límites.
+  - type: textarea
+    id: visualizacion
+    attributes:
+      label: Cómo se vería
+      description: Colores, categorías, estadísticas por barrio, bocetos.
+  - type: checkboxes
+    id: ayuda
+    attributes:
+      label: Participación
+      options:
+        - label: Me gustaría trabajar en esta propuesta.
