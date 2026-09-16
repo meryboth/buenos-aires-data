@@ -1,0 +1,37 @@
+{
+  "name": "buenos-aires-data-driven",
+  "version": "1.0.0",
+  "description": "Buenos Aires Data Driven: la ciudad en 3D leída con datos abiertos",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "data:fetch": "node scripts/fetch-data.mjs",
+    "data:buildings": "node --max-old-space-size=6144 scripts/build-building-tiles.mjs",
+    "data": "npm run data:fetch && npm run data:buildings && npm run data:parcels",
+    "smoke": "node scripts/smoke.mjs",
+    "data:parcels": "node --max-old-space-size=6144 scripts/build-parcel-tiles.mjs",
+    "bench": "node scripts/bench.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@deck.gl/core": "^9.4.0",
+    "@deck.gl/layers": "^9.4.0",
+    "@deck.gl/mapbox": "^9.4.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "maplibre-gl": "^5.24.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "geojson-vt": "^5.0.2",
+    "puppeteer-core": "^25.11.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vt-pbf": "^3.1.3"
+  },
+  "private": true
+}

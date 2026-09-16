@@ -1,0 +1,9 @@
+node_modules/
+dist/
+# Datos generados (se reconstruyen con `npm run data`)
+public/data/
+public/tiles/
+*.part
+
+# Configuración local de herramientas
+.claude/

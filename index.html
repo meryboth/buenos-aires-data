@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Buenos Aires Data Driven: la ciudad en 3D leída con datos abiertos. ¿Cuánto se puede construir todavía?" />
+    <meta name="theme-color" content="#0b0b0c" />
+    <title>Buenos Aires Data Driven</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3.5' y='19' width='7' height='9.5' rx='1.5' fill='%239ec5f4'/><rect x='12.5' y='3' width='7' height='25.5' rx='1.5' fill='%233987e5'/><rect x='21.5' y='11' width='7' height='17.5' rx='1.5' fill='%23e66767'/></svg>" />
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div id="loader" class="loader" role="status">
+      <div class="loader__brand">
+        <strong>Buenos Aires</strong>
+        <span>Data Driven</span>
+      </div>
+      <div class="loader__bar"><i></i></div>
+      <p>Cargando 1,4 millones de edificios…</p>
+    </div>
+
+    <aside id="panel" class="panel" aria-label="Análisis y capas"></aside>
+    <aside id="info" class="info" hidden aria-live="polite"></aside>
+    <div id="toolbar" class="toolbar" role="toolbar" aria-label="Cámara"></div>
+    <div id="dock" class="dock" aria-label="Leyenda"></div>
+    <div id="status" class="map-status" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
