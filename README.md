@@ -9,6 +9,8 @@
 con su altura real, cruzados con el Código Urbanístico y otras fuentes de [BA Data](https://data.buenosaires.gob.ar)
 para responder preguntas urbanas concretas: ¿cuánto se puede construir todavía?, ¿cómo crece la ciudad en altura?
 
+**👉 Probala en [buenos-aires-data.vercel.app](https://buenos-aires-data.vercel.app)**
+
 ![Vista principal: análisis de capacidad constructiva sobre el Microcentro](docs/screenshots/01-capacidad.webp)
 
 <p align="center"><img src="docs/screenshots/intro.gif" alt="Animación de entrada: la cámara vuela desde la vista de la ciudad hasta el Microcentro" width="560"></p>
@@ -72,8 +74,8 @@ Buenos Aires Data Driven es **software libre** (licencia MIT) y crece con aporte
 3. ¿Tenés una idea? Abrí una [propuesta de análisis](https://github.com/meryboth/buenos-aires-data/issues/new?template=propuesta-de-analisis.yml):
    no hace falta programar para proponer una pregunta sobre la ciudad.
 
-**Se busca ayuda especialmente en:** los análisis *Sol y sombra* y *Densidad y transporte*, la publicación de la app
-(tiles en PMTiles y hosting estático), la vista a escala barrio y la validación de resultados en territorio.
+**Se busca ayuda especialmente en:** los análisis *Sol y sombra* y *Densidad y transporte*, la vista a escala barrio
+y la validación de resultados en territorio.
 
 ## Recorrido por la app
 
@@ -220,8 +222,8 @@ flowchart LR
     F[fetch-data]
   end
   subgraph OUT["public/"]
-    VT1[tiles/buildings<br/>vector tiles z12–z14]
-    VT2[tiles/parcels<br/>vector tiles z14]
+    VT1[tiles/buildings.pmtiles<br/>vector tiles z12–z14]
+    VT2[tiles/parcels.pmtiles<br/>vector tiles z14]
     J[data/resumen-barrios.json]
     G[data/*.geojson]
   end
@@ -253,7 +255,8 @@ flowchart LR
 | [Vite](https://vite.dev) + TypeScript | Build y servidor de desarrollo; interfaz sin framework |
 | [MapLibre GL JS 6](https://maplibre.org) | Todo el mapa: base, edificios y envolvente 3D (`fill-extrusion` sobre vector tiles) y capas de datos (colectivos, ciclovías, barrios) |
 | [CARTO Dark Matter](https://github.com/CartoDB/basemap-styles) | Mapa base gratuito, sin API key |
-| Node (`geojson-vt` + `vt-pbf`) | Conversión de los GeoJSON gigantes en vector tiles estáticos |
+| Node (`geojson-vt` + `vt-pbf`) | Conversión de los GeoJSON gigantes en vector tiles |
+| [PMTiles](https://docs.protomaps.com/pmtiles/) | Un archivo por capa de tiles, leído con pedidos por rango desde cualquier hosting estático |
 | Space Grotesk + Inter | Tipografías incluidas en el proyecto (sin servicios externos) |
 | `puppeteer-core` | Smoke test, benchmark y capturas con el Edge/Chrome instalado |
 
@@ -273,11 +276,13 @@ flowchart LR
 git clone https://github.com/meryboth/buenos-aires-data.git
 cd buenos-aires-data
 npm install
-npm run data        # descarga los datasets y genera tiles (~3 min, baja ~1,6 GB la primera vez)
+# npm run data      # opcional: vuelve a descargar y procesar los datos (~3 min, baja ~1,6 GB)
 npm run dev         # http://localhost:5180
 ```
 
-Los tiles y datos generados (~130 MB) **no están en el repositorio**: `npm run data` los reconstruye.
+Los datos ya procesados (`public/tiles/*.pmtiles` y `public/data/`, ~75 MB) **están en el repositorio**, así que
+después de `npm install` podés correr `npm run dev` directamente. `npm run data` sólo hace falta para actualizarlos
+desde BA Data o después de cambiar el pipeline.
 
 Las descargas crudas se guardan **fuera del proyecto**, en `~/.cache/digital-buenos-aires` (configurable con la
 variable `DBA_CACHE_DIR`), para no sincronizar gigas a carpetas como OneDrive. Una segunda corrida reutiliza lo
@@ -285,16 +290,20 @@ descargado.
 
 ### Publicar
 
-`npm run build` genera la app en `dist/` (incluye los tiles, que conviene servir comprimidos). Antes de publicar,
-definí la URL definitiva en `.env`:
+La app publicada está en **[buenos-aires-data.vercel.app](https://buenos-aires-data.vercel.app)** y Vercel la
+actualiza con cada push a `main` (configuración en `vercel.json`).
+
+`npm run build` genera un sitio 100 % estático en `dist/`, que sirve en cualquier hosting que acepte pedidos por
+rango (`Range`), necesarios para leer los archivos PMTiles: Vercel, Netlify, Cloudflare Pages, GitHub Pages, un bucket
+S3/R2, etc. La URL del sitio se define en `.env`:
 
 ```bash
-VITE_SITE_URL=https://tu-dominio.org
+VITE_SITE_URL=https://buenos-aires-data.vercel.app
 ```
 
-Con eso se agregan el enlace canónico y `og:url`, y la miniatura para redes se sirve desde el propio sitio. Sin esa
-variable, la miniatura se toma del repositorio. La app también es instalable (manifiesto web con íconos para
-escritorio, Android e iOS).
+Con eso se agregan el enlace canónico y `og:url`, y la miniatura para redes se sirve desde el propio sitio. Si publicás
+en otra dirección, cambiala (o dejala vacía para usar la miniatura del repositorio). La app también es instalable
+(manifiesto web con íconos para escritorio, Android e iOS).
 
 ### Parámetros de URL
 
@@ -316,8 +325,8 @@ escritorio, Android e iOS).
 | `npm run typecheck` | Sólo el chequeo de tipos |
 | `npm run data` | Pipeline completo: `data:fetch` + `data:buildings` + `data:parcels` |
 | `npm run data:fetch` | Colectivos, ciclovías y barrios → `public/data/` (acepta nombres: `npm run data:fetch -- barrios`) |
-| `npm run data:buildings` | Tejido urbano + normativa → `public/tiles/buildings/` |
-| `npm run data:parcels` | Parcelas + normativa → `public/tiles/parcels/` y `public/data/resumen-barrios.json` |
+| `npm run data:buildings` | Tejido urbano + normativa → `public/tiles/buildings.pmtiles` |
+| `npm run data:parcels` | Parcelas + normativa → `public/tiles/parcels.pmtiles` y `public/data/resumen-barrios.json` |
 | `npm run smoke` | Prueba de humo con navegador headless ([ver abajo](#pruebas-y-benchmark)) |
 | `npm run bench` | Benchmark de rendimiento con GPU real |
 | `npm run docs:screenshots` | Regenera las capturas y el GIF de este README |
@@ -345,11 +354,15 @@ memoria (`scripts/lib/tiles.mjs`):
    buffer de los tiles vecinos).
 2. **Corte:** por cada grupo, `geojson-vt` corta los tiles de cada zoom y `vt-pbf` los codifica en formato Mapbox Vector
    Tile.
+3. **Empaquetado:** los tiles se comprimen con gzip y se escriben en un único archivo
+   [PMTiles v3](https://github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md) por capa (`scripts/lib/pmtiles.mjs`;
+   la librería `pmtiles` sólo lee, así que el escritor es propio). En el navegador, el protocolo `pmtiles://`
+   (`src/layers/pmtiles.ts`) pide cada tile con un pedido por rango y guarda los ya leídos en una caché compartida.
 
 | Tiles | Zooms | Filtro por zoom | Resultado |
 |---|---|---|---|
-| Edificios | z12–z14 (z15+ se sobre-amplía) | z12: ≥ 30 m · z13: ≥ 9 m · z14: todos | 92 tiles, ~98 MB (máx. 3 MB) |
-| Parcelas | z14 | todas | 67 tiles, ~32 MB (máx. 1 MB) |
+| Edificios | z12–z14 (z15+ se sobre-amplía) | z12: ≥ 30 m · z13: ≥ 9 m · z14: todos | `buildings.pmtiles`: 92 tiles, 47,5 MB |
+| Parcelas | z14 | todas | `parcels.pmtiles`: 67 tiles, 16,7 MB |
 
 Cada volumen lleva su altura, el SMP de la parcela y las propiedades del análisis (`hcons` altura construida máxima de
 la parcela, `perm` altura permitida, `cat` categoría y `dist` distrito especial). El id va en el campo nativo del tile.
@@ -375,12 +388,12 @@ Radeon integrada, vista inicial en 1400×850):
 
 | Métrica | Antes | Después |
 |---|---|---|
-| Carga hasta ver todo | 15,8 s | **5,7 s** |
-| FPS girando la cámara | 28 | **36** |
-| Cuadros lentos (percentil 95) | 245 ms | **86 ms** |
-| Tiles descargados | 20,2 MB | 17,5 MB |
+| Carga hasta ver todo | 15,8 s | **5,5 s** |
+| FPS girando la cámara | 28 | **40** |
+| Cuadros lentos (percentil 95) | 245 ms | **57 ms** |
+| Datos de tiles descargados en la prueba | 20,2 MB | 17,5 MB (comprimidos) |
 | JavaScript principal (gzip) | 498 KB | **283 KB** |
-| Peso total de los tiles | 162 MB | 130 MB |
+| Peso total de los tiles | 162 MB en ~200 archivos | **64 MB en 2 archivos** |
 
 **Qué se hizo y por qué:**
 
@@ -392,7 +405,10 @@ Radeon integrada, vista inicial en 1400×850):
   Más de 4 no mejora.
 - **Envolvente liviana.** Una sola capa, sólo desde zoom 14 y sin descargar parcelas fuera del análisis de capacidad
   (costaba ~4 s de carga y 10 FPS).
-- **Tiles más chicos.** El id va en el campo nativo del tile y no además como propiedad (−18 %).
+- **Tiles más chicos.** El id va en el campo nativo del tile y no además como propiedad (−18 %), y cada tile va
+  comprimido con gzip dentro del PMTiles (−50 %).
+- **Caché de tiles compartida.** Las vistas usan fuentes distintas sobre el mismo archivo; una caché en memoria (con tope
+  de 96 MB) evita descargar dos veces el mismo tile al cambiar de análisis.
 - **Hover.** Como máximo una consulta por cuadro y ninguna con la cámara en movimiento.
 - **Sin deck.gl.** Las capas de datos son nativas de MapLibre: menos JavaScript, un solo motor de dibujo y las capas de
   colectivos y ciclovías se descargan recién al activarlas.
@@ -402,8 +418,7 @@ Radeon integrada, vista inicial en 1400×850):
 - **Pantalla de carga** que se va con los primeros edificios; el resto se completa con un aviso.
 
 **Compensaciones:** el primer cambio a "Altura" y el primer filtro tardan ~1–2 s (procesan su fuente, con aviso en
-pantalla); los siguientes son instantáneos. Al publicar, conviene servir los tiles comprimidos: con gzip pesan la
-mitad.
+pantalla); los siguientes son instantáneos. La caché de tiles suma unos MB de memoria.
 
 ---
 
@@ -436,8 +451,9 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 
 ```
 ├─ index.html              metadatos (SEO, Open Graph, datos estructurados), pantalla de carga e interfaz
-├─ public/                 favicon, íconos, manifiesto web y miniatura para redes
-├─ vite.config.ts          sirve los tiles desde disco, metadatos según VITE_SITE_URL y puertos
+├─ public/                 favicon, íconos, manifiesto web, miniatura, datos (data/) y tiles (tiles/*.pmtiles)
+├─ vite.config.ts          sirve los PMTiles con pedidos por rango, metadatos según VITE_SITE_URL y puertos
+├─ vercel.json             build y caché del sitio publicado
 ├─ scripts/
 │  ├─ fetch-data.mjs       datasets livianos → public/data
 │  ├─ build-building-tiles.mjs
@@ -449,6 +465,7 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 │  └─ lib/
 │     ├─ common.mjs        descargas, caché y utilidades
 │     ├─ tiles.mjs         generador genérico de vector tiles en streaming
+│     ├─ pmtiles.mjs       escritor de archivos PMTiles v3
 │     └─ zoning.mjs        normativa por parcela y clasificación
 ├─ src/
 │  ├─ main.ts              arranque, estado, cámara, hover y clics
@@ -458,6 +475,7 @@ memoria, FPS orbitando, costo del hover y tiempos de cambio de análisis y de fi
 │  ├─ layers/
 │  │  ├─ buildings.ts      vistas de edificios (una fuente por vista)
 │  │  ├─ envelope.ts       envolvente permitida sin construir
+│  │  ├─ pmtiles.ts        protocolo pmtiles:// con caché compartida
 │  │  └─ transport.ts      capas de datos (colectivos, ciclovías, barrios)
 │  ├─ ui/                  panel, leyenda, ficha, herramientas, avisos y gráficos
 │  └─ style.css
@@ -509,8 +527,8 @@ rankings (`rankingsHtml`).
 - **Vista de barrio.** Con el mapa alejado (zoom 13) se ocultan las construcciones de menos de 9 m para aligerar los
   tiles, y en los barrios bajos predomina la envolvente.
 - **Subte.** Se dejó fuera por ahora.
-- **Publicación.** Los tiles no están en el repositorio: para publicar la app hay que alojarlos aparte (ver
-  [Hoja de ruta](#hoja-de-ruta)).
+- **Datos en el repositorio.** Cada regeneración de los tiles suma ~65 MB al historial de git; conviene actualizarlos
+  sólo cuando cambian los datos de origen o el pipeline.
 
 ## Hoja de ruta
 
@@ -518,7 +536,7 @@ rankings (`rankingsHtml`).
 
 - [ ] Análisis **Sol y sombra**.
 - [ ] Análisis **Densidad y transporte**.
-- [ ] Publicar la app: tiles empaquetados en **PMTiles** y comprimidos, en un hosting estático.
+- [x] Publicar la app: tiles en **PMTiles** en un hosting estático ([Vercel](https://buenos-aires-data.vercel.app)).
 - [ ] Mostrar todas las construcciones a escala barrio.
 - [ ] Vehículos en tiempo real con la API de Transporte de la Ciudad (requiere credenciales).
 - [ ] Sumar capas producidas en QGIS (GeoJSON o GeoPackage) al pipeline.
@@ -532,7 +550,7 @@ rankings (`rankingsHtml`).
   (ver la ficha de cada dataset).
 - **Mapa base:** © [CARTO](https://carto.com/attributions) · © colaboradores de
   [OpenStreetMap](https://www.openstreetmap.org/copyright).
-- **Librerías:** MapLibre GL JS (BSD-3), Vite (MIT), geojson-vt (ISC), vt-pbf (MIT), puppeteer-core
+- **Librerías:** MapLibre GL JS (BSD-3), PMTiles (BSD-3), Vite (MIT), geojson-vt (ISC), vt-pbf (MIT), puppeteer-core
   (Apache-2.0), Inter y Space
   Grotesk (SIL OFL).
 - **Código de este repositorio:** [licencia MIT](LICENSE). Las contribuciones se publican bajo la misma licencia.

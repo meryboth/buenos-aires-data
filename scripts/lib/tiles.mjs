@@ -2,12 +2,15 @@
 //
 // Paso 1: cada feature se agrega a buckets NDJSON (uno por tile de `bucketZoom` que toca).
 // Paso 2: por bucket, geojson-vt corta los tiles `minzoom`–`maxzoom` y vt-pbf los codifica.
-// Así nunca se carga el dataset completo en memoria.
+// Paso 3: los tiles se empaquetan en un único archivo PMTiles (public/tiles/<capa>.pmtiles),
+// que cualquier hosting estático sirve con pedidos por rango.
+// Así nunca se carga el dataset completo en memoria (sólo los tiles ya codificados).
 import fs from 'node:fs';
 import path from 'node:path';
 import GeoJSONVT from 'geojson-vt';
 import vtpbf from 'vt-pbf';
 import { CACHE_DIR, ROOT } from './common.mjs';
+import { writePmtiles } from './pmtiles.mjs';
 
 // Margen (grados) al asignar buckets, para cubrir el buffer de los tiles vecinos.
 const BUCKET_MARGIN = 0.0005;
@@ -39,7 +42,7 @@ export function bbox(coords, acc = [Infinity, Infinity, -Infinity, -Infinity]) {
  * @param {object} [o.meta]                              datos extra para metadata.json
  */
 export async function buildVectorTiles({ features, layer, minzoom, maxzoom, keep = () => true, enrich, meta = {} }) {
-  const outDir = path.join(ROOT, 'public', 'tiles', layer);
+  const outFile = path.join(ROOT, 'public', 'tiles', `${layer}.pmtiles`);
   const bucketDir = path.join(CACHE_DIR, '..', 'buckets', layer);
   const t0 = Date.now();
 
@@ -71,8 +74,8 @@ export async function buildVectorTiles({ features, layer, minzoom, maxzoom, keep
   console.log(`  ${count.toLocaleString('es-AR')} features en ${streams.size} buckets`);
 
   console.log(`[${layer}] paso 2/2: generando tiles…`);
-  fs.rmSync(outDir, { recursive: true, force: true });
   const perZoom = {};
+  const tiles = [];
   for (const key of streams.keys()) {
     const [bx, by] = key.split('_').map(Number);
     const text = fs.readFileSync(path.join(bucketDir, `${key}.ndjson`), 'utf8');
@@ -93,9 +96,8 @@ export async function buildVectorTiles({ features, layer, minzoom, maxzoom, keep
           const [x, y] = [bx * n + dx, by * n + dy];
           const tile = index.getTile(z, x, y);
           if (!tile || tile.features.length === 0) continue;
-          const buf = vtpbf.fromGeojsonVt({ [layer]: tile }, { version: 2 });
-          fs.mkdirSync(path.join(outDir, String(z), String(x)), { recursive: true });
-          fs.writeFileSync(path.join(outDir, String(z), String(x), `${y}.pbf`), buf);
+          const buf = Buffer.from(vtpbf.fromGeojsonVt({ [layer]: tile }, { version: 2 }));
+          tiles.push({ z, x, y, data: buf });
           const s = (perZoom[z] ??= { tiles: 0, bytes: 0, maxBytes: 0 });
           s.tiles++;
           s.bytes += buf.length;
@@ -105,14 +107,31 @@ export async function buildVectorTiles({ features, layer, minzoom, maxzoom, keep
     }
   }
 
-  fs.writeFileSync(
-    path.join(outDir, 'metadata.json'),
-    JSON.stringify({ layer, generatedAt: new Date().toISOString(), minzoom, maxzoom, bounds, features: count, tiles: perZoom, ...meta }, null, 2),
-  );
   for (const [z, s] of Object.entries(perZoom)) {
-    console.log(`  z${z}: ${s.tiles} tiles, ${(s.bytes / 1e6).toFixed(1)} MB (máx ${(s.maxBytes / 1e6).toFixed(2)} MB)`);
+    console.log(`  z${z}: ${s.tiles} tiles, ${(s.bytes / 1e6).toFixed(1)} MB sin comprimir (máx ${(s.maxBytes / 1e6).toFixed(2)} MB)`);
   }
-  console.log(`✓ [${layer}] listo en ${((Date.now() - t0) / 1000).toFixed(0)} s → ${path.relative(ROOT, outDir)}`);
+
+  // Limpia el formato anterior (un .pbf por tile), si existe.
+  fs.rmSync(path.join(ROOT, 'public', 'tiles', layer), { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  const written = writePmtiles(outFile, tiles, {
+    minzoom,
+    maxzoom,
+    bounds,
+    metadata: {
+      name: layer,
+      format: 'pbf',
+      generator: 'buenos-aires-data-driven',
+      generatedAt: new Date().toISOString(),
+      vector_layers: [{ id: layer, minzoom, maxzoom, fields: {} }],
+      features: count,
+      tiles: perZoom,
+      ...meta,
+    },
+  });
+  console.log(
+    `✓ [${layer}] listo en ${((Date.now() - t0) / 1000).toFixed(0)} s → ${path.relative(ROOT, outFile)} (${written.tiles} tiles, ${(written.bytes / 1e6).toFixed(1)} MB)`,
+  );
 }
 
 /** Recorre un GeoJSON "un feature por línea" (formato de BA Data) sin cargarlo entero. */

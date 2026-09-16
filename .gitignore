@@ -1,8 +1,8 @@
 node_modules/
 dist/
-# Datos generados (se reconstruyen con `npm run data`)
-public/data/
-public/tiles/
+# Los datos generados (public/data y public/tiles/*.pmtiles) SÍ se versionan: el deploy los necesita.
+# Formato anterior de tiles (un archivo por tile), ya no se usa:
+public/tiles/*/
 *.part
 
 # Configuración local de herramientas

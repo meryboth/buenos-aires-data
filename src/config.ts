@@ -13,7 +13,10 @@ export const CABA_BOUNDS: [[number, number], [number, number]] = [
 // Estilo base gratuito de CARTO (sin API key). Requiere atribución, incluida en el estilo.
 export const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 
-const tilesUrl = (layer: string) => `${location.origin}${import.meta.env.BASE_URL}tiles/${layer}/{z}/{x}/{y}.pbf`;
+// Cada capa es un archivo PMTiles; el protocolo pmtiles:// (registrado en main.ts) lee cada tile
+// con un pedido por rango, así la app funciona en cualquier hosting estático.
+const tilesUrl = (layer: string) =>
+  `pmtiles://${location.origin}${import.meta.env.BASE_URL}tiles/${layer}.pmtiles/{z}/{x}/{y}`;
 export const BUILDING_TILES = tilesUrl('buildings');
 export const PARCEL_TILES = tilesUrl('parcels');
 

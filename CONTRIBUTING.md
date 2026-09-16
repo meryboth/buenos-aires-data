@@ -25,7 +25,7 @@ Algunas ideas para arrancar:
 
 - **Análisis "Sol y sombra":** sombras de invierno con la ciudad actual y con la envolvente completa.
 - **Análisis "Densidad y transporte":** capacidad remanente según la distancia a subte, tren y Metrobus.
-- **Publicación:** empaquetar los tiles en PMTiles y desplegar la app en un hosting estático.
+- **Carga progresiva:** mostrar primero una versión liviana de los edificios y completar el detalle después.
 - **Escala barrio:** mostrar todas las construcciones con el mapa alejado sin que los tiles pesen demasiado.
 - **Validación:** comparar la categoría de parcelas conocidas con lo que se ve en la calle.
 - **Pruebas:** tests unitarios para `scripts/lib/zoning.mjs` (normalización de SMP y clasificación).
@@ -38,8 +38,7 @@ Requisitos: Node.js 20.11 o superior y ~2 GB libres. Para las pruebas automátic
 git clone https://github.com/<tu-usuario>/buenos-aires-data.git
 cd buenos-aires-data
 npm install
-npm run data        # descarga los datos abiertos y genera los tiles (~3 min la primera vez)
-npm run dev         # http://localhost:5180
+npm run dev         # http://localhost:5180 (los datos procesados ya vienen en el repositorio)
 ```
 
 El [README](README.md) explica la arquitectura, el pipeline de datos y cómo
@@ -84,8 +83,9 @@ En español, en imperativo y describiendo el cambio: `Agrega análisis de sol y 
   de colores atípica y acompañalos siempre con texto.
 - **Rendimiento en MapLibre:** agregar capas, cambiar filtros o colores que dependen de los datos reprocesa toda la
   fuente. Leé la sección [Rendimiento](README.md#rendimiento) antes de tocar `src/layers/`.
-- **Datos:** no subas datos crudos ni tiles al repositorio; se generan con `npm run data`. Las descargas van al caché
-  fuera del proyecto.
+- **Datos:** los datos procesados (`public/tiles/*.pmtiles`, `public/data/`) sí se versionan porque el sitio publicado
+  los necesita. Regeneralos y commitealos sólo si cambian los datos de origen o el pipeline (cada versión suma ~65 MB al
+  historial), en un commit aparte. Nunca subas las descargas crudas: van al caché fuera del proyecto.
 
 ## Datos y metodología
 

@@ -2,28 +2,41 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer, type PreviewServer } from 'vite';
 
-// Sirve los vector tiles directamente desde disco:
-// - Tiles fuera de la ciudad no existen: 204 (tile vacío) en vez del fallback SPA a index.html,
-//   que MapLibre intentaría decodificar como protobuf.
-// - Vite guarda la lista de archivos de public/ al arrancar; si se regeneran los tiles con el
-//   servidor corriendo, los nuevos caerían en ese mismo fallback.
+// Sirve los archivos PMTiles directamente desde disco, con pedidos por rango (como un hosting
+// estático). Vite guarda la lista de archivos de public/ al arrancar: sin esto, un .pmtiles
+// regenerado con el servidor corriendo caería en el fallback a index.html.
 function serveTiles(): Plugin {
   const install = (server: ViteDevServer | PreviewServer, root: string) => {
     const tilesDir = path.join(root, 'tiles');
     server.middlewares.use((req, res, next) => {
       const url = req.url?.split('?')[0] ?? '';
-      if (!url.startsWith('/tiles/') || !url.endsWith('.pbf')) return next();
+      if (!url.startsWith('/tiles/') || !url.endsWith('.pmtiles')) return next();
       const file = path.join(root, decodeURIComponent(url));
       if (!file.startsWith(tilesDir)) return next();
       fs.stat(file, (err, stat) => {
         if (err) {
-          res.statusCode = 204;
+          res.statusCode = 404;
           return res.end();
         }
-        res.setHeader('Content-Type', 'application/x-protobuf');
-        res.setHeader('Content-Length', stat.size);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Accept-Ranges', 'bytes');
         res.setHeader('Cache-Control', 'no-cache');
-        fs.createReadStream(file).pipe(res);
+        const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+        if (!range) {
+          res.setHeader('Content-Length', stat.size);
+          return fs.createReadStream(file).pipe(res);
+        }
+        const start = range[1] ? Number(range[1]) : Math.max(0, stat.size - Number(range[2]));
+        const end = range[1] && range[2] ? Math.min(Number(range[2]), stat.size - 1) : stat.size - 1;
+        if (start > end || start >= stat.size) {
+          res.statusCode = 416;
+          res.setHeader('Content-Range', `bytes */${stat.size}`);
+          return res.end();
+        }
+        res.statusCode = 206;
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${stat.size}`);
+        res.setHeader('Content-Length', end - start + 1);
+        fs.createReadStream(file, { start, end }).pipe(res);
       });
     });
   };

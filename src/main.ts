@@ -28,6 +28,7 @@ import {
   setBuildingsVisible,
 } from './layers/buildings';
 import { addEnvelope, setEnvelopeView, visibleEnvelopeLayers } from './layers/envelope';
+import { registerPmtilesProtocol } from './layers/pmtiles';
 import {
   DATA_LAYERS,
   PICK_FALLBACK_LAYERS,
@@ -60,6 +61,7 @@ const withIntro = !params.has('nointro') && !matchMedia('(prefers-reduced-motion
 // MapLibre procesa los tiles con un solo worker por defecto (salvo en Safari). Con 2 la carga inicial baja
 // ~20 % (npm run bench); más de 4 no mejora. ?workers=N permite probar otros valores.
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
+registerPmtilesProtocol();
 maplibregl.setWorkerCount(
   Number(params.get('workers')) || Math.min(4, Math.max(2, Math.floor((navigator.hardwareConcurrency || 4) / 4))),
 );
